@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import TopicDetail from './pages/TopicDetail'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -22,6 +23,11 @@ function AppRoutes() {
           <Dashboard />
         </ProtectedRoute>
       } />
+      <Route path="/topic/:id" element={
+  <ProtectedRoute>
+    <TopicDetail />
+  </ProtectedRoute>
+} />
     </Routes>
   )
 }

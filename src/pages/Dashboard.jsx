@@ -151,7 +151,12 @@ function Dashboard() {
                   </span>
                 </div>
 
-                <h3 style={styles.topicTitle}>{topic.title}</h3>
+               <h3
+  style={{...styles.topicTitle, cursor: 'pointer', color: '#16a34a'}}
+  onClick={() => navigate(`/topic/${topic.id}`)}
+>
+  {topic.title} →
+</h3>
                 <p style={styles.topicDescription}>{topic.description}</p>
 
                 <div style={styles.whySection}>
