@@ -9,6 +9,17 @@ function TopicDetail() {
   const [loading, setLoading] = useState(true)
   const [activeQa, setActiveQa] = useState(null)
   const [progress, setProgress] = useState(null)
+   // AI Tutor states
+const [doubt, setDoubt] = useState('')
+const [aiAnswer, setAiAnswer] = useState('')
+const [aiLoading, setAiLoading] = useState(false)
+
+// Coding Practice states
+const [challenge, setChallenge] = useState('')
+const [userCode, setUserCode] = useState('')
+const [codeReview, setCodeReview] = useState('')
+const [challengeLoading, setChallengeLoading] = useState(false)
+const [reviewLoading, setReviewLoading] = useState(false)
 
   useEffect(() => {
     fetchTopic()
@@ -53,6 +64,60 @@ function TopicDetail() {
     }
   }
 
+  
+  const handleAskDoubt = async () => {
+  if (!doubt.trim()) return
+  setAiLoading(true)
+  setAiAnswer('')
+  try {
+    const res = await api.post('/api/ai/doubt', {
+      topicId: topic.id,
+      question: doubt
+    })
+    setAiAnswer(res.data.answer)
+  } catch (err) {
+    setAiAnswer('Failed to get answer. Please try again.')
+  } finally {
+    setAiLoading(false)
+  }
+}
+
+const handleGenerateChallenge = async () => {
+  setChallengeLoading(true)
+  setChallenge('')
+  setCodeReview('')
+  setUserCode('')
+  try {
+    const res = await api.post('/api/ai/challenge', {
+      topicId: topic.id
+    })
+    setChallenge(res.data.challenge)
+  } catch (err) {
+    setChallenge('Failed to generate challenge. Please try again.')
+  } finally {
+    setChallengeLoading(false)
+  }
+}
+
+const handleReviewCode = async () => {
+  if (!userCode.trim()) return
+  setReviewLoading(true)
+  setCodeReview('')
+  try {
+    const res = await api.post('/api/ai/review', {
+      topicId: topic.id,
+      challenge: challenge,
+      userCode: userCode
+    })
+    setCodeReview(res.data.review)
+  } catch (err) {
+    setCodeReview('Failed to review code. Please try again.')
+  } finally {
+    setReviewLoading(false)
+  }
+}
+
+
   if (loading) return <div style={styles.loading}>Loading topic...</div>
   if (!topic) return <div style={styles.loading}>Topic not found</div>
 
@@ -65,6 +130,88 @@ function TopicDetail() {
 
   return (
     <div style={styles.container}>
+
+        {/* AI Tutor Section */}
+<div style={styles.section}>
+  <div style={styles.sectionIcon}>🤖</div>
+  <h2 style={styles.sectionTitle}>Ask AI Tutor</h2>
+  <p style={styles.interviewSubtitle}>
+    Have a doubt about {topic.title}? Ask your personal AI tutor.
+  </p>
+  <textarea
+    style={styles.textarea}
+    value={doubt}
+    onChange={(e) => setDoubt(e.target.value)}
+    placeholder={`Ask anything about ${topic.title}...`}
+    rows={3}
+  />
+  <button
+    style={aiLoading ? styles.aiButtonDisabled : styles.aiButton}
+    onClick={handleAskDoubt}
+    disabled={aiLoading}
+  >
+    {aiLoading ? '🤔 Thinking...' : '🤖 Ask AI Tutor'}
+  </button>
+  {aiAnswer && (
+    <div style={styles.aiAnswer}>
+      <p style={styles.aiAnswerLabel}>🤖 SpringPath AI Tutor:</p>
+      <p style={styles.aiAnswerText}>{aiAnswer}</p>
+    </div>
+  )}
+</div>
+
+{/* Coding Practice Section */}
+<div style={styles.section}>
+  <div style={styles.sectionIcon}>💻</div>
+  <h2 style={styles.sectionTitle}>Coding Practice</h2>
+  <p style={styles.interviewSubtitle}>
+    Practice what you learned with an AI-generated challenge.
+    Submit your code and get instant feedback.
+  </p>
+  <button
+    style={challengeLoading ? styles.aiButtonDisabled : styles.aiButton}
+    onClick={handleGenerateChallenge}
+    disabled={challengeLoading}
+  >
+    {challengeLoading ? '⚙️ Generating...' : '⚡ Generate Challenge'}
+  </button>
+
+  {challenge && (
+    <div style={styles.challengeBox}>
+      <pre style={styles.challengeText}>{challenge}</pre>
+    </div>
+  )}
+
+  {challenge && (
+    <>
+      <p style={{...styles.aiAnswerLabel, marginTop: '16px'}}>
+        ✍️ Write your solution:
+      </p>
+      <textarea
+        style={styles.codeTextarea}
+        value={userCode}
+        onChange={(e) => setUserCode(e.target.value)}
+        placeholder="// Write your Java code here..."
+        rows={12}
+        spellCheck={false}
+      />
+      <button
+        style={reviewLoading ? styles.aiButtonDisabled : styles.reviewButton}
+        onClick={handleReviewCode}
+        disabled={reviewLoading}
+      >
+        {reviewLoading ? '🔍 Reviewing...' : '🚀 Submit for AI Review'}
+      </button>
+    </>
+  )}
+
+  {codeReview && (
+    <div style={styles.reviewBox}>
+      <p style={styles.aiAnswerLabel}>📋 AI Code Review:</p>
+      <pre style={styles.reviewText}>{codeReview}</pre>
+    </div>
+  )}
+</div>
 
       {/* Navbar */}
       <nav style={styles.navbar}>
@@ -234,6 +381,73 @@ const styles = {
     alignItems: 'center', justifyContent: 'center',
     fontSize: '16px', color: '#6b7280'
   },
+
+  textarea: {
+  width: '100%', padding: '12px',
+  border: '1px solid #d1d5db', borderRadius: '8px',
+  fontSize: '14px', fontFamily: 'inherit',
+  resize: 'vertical', outline: 'none',
+  boxSizing: 'border-box', marginBottom: '12px',
+},
+codeTextarea: {
+  width: '100%', padding: '16px',
+  border: '1px solid #d1d5db', borderRadius: '8px',
+  fontSize: '13px', fontFamily: 'monospace',
+  resize: 'vertical', outline: 'none',
+  boxSizing: 'border-box', marginBottom: '12px',
+  backgroundColor: '#1e293b', color: '#e2e8f0',
+  lineHeight: '1.6',
+},
+aiButton: {
+  padding: '10px 20px', backgroundColor: '#7c3aed',
+  color: 'white', border: 'none', borderRadius: '8px',
+  cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+  marginBottom: '16px',
+},
+aiButtonDisabled: {
+  padding: '10px 20px', backgroundColor: '#c4b5fd',
+  color: 'white', border: 'none', borderRadius: '8px',
+  cursor: 'not-allowed', fontSize: '14px', fontWeight: '600',
+  marginBottom: '16px',
+},
+reviewButton: {
+  padding: '10px 20px', backgroundColor: '#16a34a',
+  color: 'white', border: 'none', borderRadius: '8px',
+  cursor: 'pointer', fontSize: '14px', fontWeight: '600',
+  marginBottom: '16px',
+},
+aiAnswer: {
+  backgroundColor: '#faf5ff', border: '1px solid #e9d5ff',
+  borderRadius: '10px', padding: '16px', marginTop: '8px',
+},
+aiAnswerLabel: {
+  fontSize: '13px', fontWeight: '700',
+  color: '#7c3aed', margin: '0 0 8px 0',
+},
+aiAnswerText: {
+  fontSize: '14px', color: '#374151',
+  lineHeight: '1.8', margin: 0, whiteSpace: 'pre-wrap',
+},
+challengeBox: {
+  backgroundColor: '#f8fafc', border: '1px solid #e2e8f0',
+  borderRadius: '10px', padding: '16px', marginTop: '12px',
+  marginBottom: '16px',
+},
+challengeText: {
+  fontSize: '13px', color: '#374151',
+  lineHeight: '1.7', margin: 0, whiteSpace: 'pre-wrap',
+  fontFamily: 'inherit',
+},
+reviewBox: {
+  backgroundColor: '#f0fdf4', border: '1px solid #dcfce7',
+  borderRadius: '10px', padding: '16px', marginTop: '8px',
+},
+reviewText: {
+  fontSize: '13px', color: '#374151',
+  lineHeight: '1.7', margin: 0, whiteSpace: 'pre-wrap',
+  fontFamily: 'inherit',
+},
+
   navbar: {
     display: 'flex', justifyContent: 'space-between',
     alignItems: 'center', padding: '16px 32px',
